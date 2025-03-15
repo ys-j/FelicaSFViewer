@@ -9,8 +9,8 @@ import android.webkit.WebMessage;
 import android.webkit.WebView;
 
 public class MainActivity extends Activity {
-	private final String origin = "felicasfviewer.ysj.works";
-	private final String url = "https://" + origin + "/view.html";
+	private final String origin = "https://felicasfviewer.ysj.works";
+	private final String url = origin + "/view.html";
 
 	@Override
 	public void onCreate(Bundle savedInstanceState) {

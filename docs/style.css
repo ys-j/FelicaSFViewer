@@ -149,7 +149,7 @@ tr .yen {
 		transparent 66.7%,
 		color(from var(--pasmo-pink) srgb r g b / .8) 66.7%
 	);
-	border-radius: 1.75em;
+	border-radius: 1em;
 	color: white;
 	padding: .5em 1em;
 }
