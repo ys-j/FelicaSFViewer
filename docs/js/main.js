@@ -1,5 +1,5 @@
 import { NfcFTransceiver } from './nfcf.js';
-import { RequestPacketBuilder, ResponsePacket, createServiceReadPackets } from './packet.js';
+import { RequestPacketBuilder, createServiceReadPackets } from './packet.js';
 import { SuicaEntity, SuicaShopLog, SuicaBusLog, SuicaTrainLog, EdyEntity, WaonEntity, NanacoEntity } from './entity.js';
 import l10nMap from './l10n_map.js';
 
@@ -21,18 +21,18 @@ window.addEventListener('message', onTagDiscovered, { passive: true });
 /**
  * On tag discovered, transceive data.
  * @param {MessageEvent<string>} e message event which has data of base64-encoded tag id
- * @returns 
+ * @returns None
  */
 function onTagDiscovered(e) {
-	// @ts-expect-error
+	// @ts-ignore
+	if (!NfcF) return;
+	// @ts-ignore
 	const nfc = new NfcFTransceiver(NfcF, e.data);
 	
 	const req = new RequestPacketBuilder(0x0c, nfc.IDm);
 	const res = nfc.transceive(req);
 	if (res) {
 		const systemCodes = res.getSystemCodes();
-		console.log(systemCodes.map(v => v.toString(16).padStart(2, '0')));
-
 		switch (systemCodes[0]) {
 			case 0x0003: {
 				// Suica/PASMO/交通系IC
@@ -110,13 +110,15 @@ function renderSuicaView(data) {
 			+ `<td><span class=yen><span>${r.value.toLocaleString()}</span></span>`
 			+ `<td class=l>${l10n.get(type + '-process_type-' + processType) || processType}`;
 		if (r instanceof SuicaTrainLog) {
-			const departure = r.departure.station;
-			const arrival = r.arrival.station;
-			if (departure && arrival) {
-				html += `（${departure.toString(16).padStart(5, '0')}→${arrival.toString(16).padStart(5, '0')}）`;
-			} else if (departure || arrival) {
-				html += `${departure.toString(16).padStart(5, '0') || arrival.toString(16).padStart(5, '0')}`;
-			}
+			const departureId = (r.departure.area << 17) + r.departure.station;
+			const departure = departureId
+				? `<span data-area-id=${r.departure.area} data-station-id=${r.departure.station}>${departureId.toString(16).padStart(5, '0')}</span>`
+				: '';
+			const arrivalId = (r.arrival.area << 17) + r.arrival.station;
+			const arrival = arrivalId
+				? `<span data-area-id=${r.arrival.area} data-station-id=${r.arrival.station}>${arrivalId.toString(16).padStart(5, '0')}</span>`
+				: '';
+			html += '<span class=station-note>' + departure + arrival + '</span>';
 		} else if (r instanceof SuicaBusLog) {
 			html += `（）`;
 		}
@@ -210,19 +212,20 @@ function renderNanacoView(data) {
 }
 
 /**
- * 
- * @param { { datetime: Date, value: number } } a 
- * @param { { datetime: Date, value: number } } b 
+ * Sort by datetime and value.
+ * @param { { datetime: Date, value: number } } a Object which has `datetime` and `value` properties.
+ * @param { { datetime: Date, value: number } } b Object which has `datetime` and `value` properties.
+ * @returns Order difference
  */
 function sorter(a, b) {
 	return b.datetime.valueOf() - a.datetime.valueOf() || a.value - b.value;
 }
 
 /**
- * 
- * @this {Date} 
- * @param {boolean} [time]
- * @param {boolean} [second]
+ * Format date as ISO style.
+ * @this {Date} Date object
+ * @param {boolean} [time] Whether to display to minutes: `Thh:mm`.
+ * @param {boolean} [second] Whether to display to seconds: `:ss`
  */
 function dfmt(time = false, second = false) {
 	/** @param {number} n */

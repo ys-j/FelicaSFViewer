@@ -24,6 +24,7 @@
 }
 
 body {
+	font-size: 125%;
 	height: 100%;
 	margin: 0;
 	padding: 0;
@@ -139,6 +140,15 @@ tr > .r {
 tr .yen {
 	display: flex;
 	justify-content: space-between;
+}
+.station-note:not(:empty)::before {
+	content: '（';
+}
+.station-note:not(:empty)::after {
+	content: '）';
+}
+.station-note > span + span::before {
+	content: '→';
 }
 
 [data-type="suica"i] .card-inner {

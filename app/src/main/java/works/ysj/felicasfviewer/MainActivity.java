@@ -6,6 +6,7 @@ import android.nfc.NfcAdapter;
 import android.nfc.tech.NfcF;
 import android.os.Bundle;
 import android.webkit.WebMessage;
+import android.webkit.WebSettings;
 import android.webkit.WebView;
 
 public class MainActivity extends Activity {
@@ -18,7 +19,10 @@ public class MainActivity extends Activity {
 		setContentView(R.layout.activity_main);
 		WebView webView = findViewById(R.id.webview);
 		NfcFJsInterfaces interfaces = new NfcFJsInterfaces();
-		webView.getSettings().setJavaScriptEnabled(true);
+		WebSettings settings = webView.getSettings();
+		settings.setCacheMode(WebSettings.LOAD_CACHE_ELSE_NETWORK);
+		settings.setDomStorageEnabled(true);
+		settings.setJavaScriptEnabled(true);
 		webView.addJavascriptInterface(interfaces, "NfcF");
 		webView.loadUrl(url);
 

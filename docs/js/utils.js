@@ -19,7 +19,7 @@ export const Base64 = {
 };
 
 /**
- * 
+ * Convert bytes to hex string.
  * @param {Uint8Array} bytes 
  * @param {string} [separator] 
  */
@@ -28,7 +28,7 @@ export function bytesToHexString(bytes, separator = '') {
 }
 
 /**
- * 
+ * Convert bytes to integer.
  * @param {Uint8Array} bytes 
  * @param {boolean} isBigEndian 
  * @returns Integer
@@ -43,9 +43,10 @@ export function bytesToInt(bytes, isBigEndian = false) {
 }
 
 /**
+ * Cut string into several pieces.
  * @param {string} str Original string
- * @param {number} n Length of one chunk
- * @returns 
+ * @param {number} n Size of one chunk
+ * @returns Array of chunked string
  */
 export function chunk(str, n) {
 	const arr = [];
