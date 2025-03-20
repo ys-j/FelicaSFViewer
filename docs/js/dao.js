@@ -1,5 +1,5 @@
-const stationListPath = './station_code.tsv';
-const busListPath = './bus_code_tsv';
+const stationListPath = './db/station_code.tsv';
+const busListPath = './db/bus_code.tsv';
 const dbVersion = 2;
 
 /**
