@@ -18,19 +18,20 @@ public class MainActivity extends Activity {
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.activity_main);
 		WebView webView = findViewById(R.id.webview);
-		NfcFJsInterfaces interfaces = new NfcFJsInterfaces();
 		WebSettings settings = webView.getSettings();
 		settings.setCacheMode(WebSettings.LOAD_CACHE_ELSE_NETWORK);
 		settings.setDomStorageEnabled(true);
 		settings.setJavaScriptEnabled(true);
+
+		NfcFJsInterfaces interfaces = new NfcFJsInterfaces();
 		webView.addJavascriptInterface(interfaces, "NfcF");
 		webView.loadUrl(url);
 
 		NfcAdapter adapter = NfcAdapter.getDefaultAdapter(this);
 		adapter.enableReaderMode(this, tag -> {
+			NfcF nfc = NfcF.get(tag);
+			String id = interfaces.encoder.encodeToString(tag.getId());
 			webView.post(() -> {
-				NfcF nfc = NfcF.get(tag);
-				String id = interfaces.encoder.encodeToString(tag.getId());
 				interfaces.apply(nfc);
 				webView.postWebMessage(new WebMessage(id), Uri.parse(origin));
 			});

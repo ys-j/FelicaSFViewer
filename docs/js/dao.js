@@ -1,12 +1,18 @@
 const stationListPath = './station_code.tsv';
-const dbVersion = 1;
+const busListPath = './bus_code_tsv';
+const dbVersion = 2;
 
 /**
  * @typedef StationRecord
- * @property {number} area
- * @property {number} code
- * @property {string} name
- * @property {string} note
+ * @prop {number} area
+ * @prop {number} code
+ * @prop {string} name
+ * @prop {string} note
+ */
+/**
+ * @typedef BusRecord
+ * @prop {number} code
+ * @prop {string} name
  */
 
 class Database {
@@ -38,28 +44,55 @@ class Database {
 	 */
 	async initialize(db = this.db) {
 		db.createObjectStore('station', { keyPath: ['area', 'code'] });
-		const res = await fetch(stationListPath);
-		const text = await res.text();
-		const tx = db.transaction('station', 'readwrite');
-		const store = tx.objectStore('station');
-		const lines = text.split('\n');
-		for (const ln of lines) {
-			const [areaCode, codeStr, name, note] = ln.split('\t');
-			const [area, code] = [areaCode, codeStr].map(s => Number.parseInt(s, 16));
-			if (code) {
-				/** @type {StationRecord} */
-				const record = { area, code, name, note };
-				store.put(record);
+		db.createObjectStore('bus', { keyPath: ['code'] });
+		const tx = db.transaction(['station', 'bus'], 'readwrite');
+		fetch(stationListPath).then(res => res.text()).then(text => {
+			const store = tx.objectStore('station');
+			const lines = text.split('\n');
+			for (const ln of lines) {
+				const [areaStr, codeStr, name, note] = ln.split('\t');
+				const [area, code] = [areaStr, codeStr].map(s => Number.parseInt(s, 16));
+				if (code) {
+					/** @type {StationRecord} */
+					const record = { area, code, name, note };
+					store.put(record);
+				}
 			}
-		}
+		});
+		fetch(busListPath).then(res => res.text()).then(text => {
+			const store = tx.objectStore('bus');
+			const lines = text.split('\n');
+			for (const ln of lines) {
+				const [codeStr, name] = ln.split('\t');
+				const code = Number.parseInt(codeStr, 16);
+				if (code) {
+					/** @type {BusRecord} */
+					const record = { code, name };
+					store.put(record);
+				}
+			}
+		});
 	}
 
 	/**
+	 * @overload
 	 * @param {number[]} key 
-	 * @param {IDBObjectStore} [store] 
-	 * @returns {Promise<StationRecord?>}
+	 * @param {'station'} storeName 
+	 * @returns {Promise<StationRecord>}
 	 */
-	fetchStation(key, store = this.db.transaction('station').objectStore('station')) {
+	/**
+	 * @overload
+	 * @param {number} key 
+	 * @param {'bus'} storeName 
+	 * @returns {Promise<BusRecord>}
+	 */
+	/**
+	 * @param {*} key
+	 * @param {string} storeName
+	 * @returns {Promise}
+	 */
+	fetch(key, storeName) {
+		const store = this.transaction(storeName).objectStore(storeName);
 		return new Promise((resolve, reject) => {
 			const req = store.get(key);
 			req.onerror = () => { reject(key); };
@@ -80,14 +113,13 @@ class Database {
  * @param {Database} db 
  */
 const onDatabaseOpen = db => {
-	const store = db.transaction('station').objectStore('station');
 	/** @type {NodeListOf<HTMLSpanElement>} */
-	const spans = document.querySelectorAll('[data-area-id][data-station-id]');
-	for (const span of spans) {
+	const staSpans = document.querySelectorAll('[data-area-id][data-station-id]');
+	for (const span of staSpans) {
 		const { areaId, stationId } = span.dataset;
 		if (areaId && stationId) {
 			const key = [areaId, stationId].map(v => Number.parseInt(v));
-			db.fetchStation(key, store).then(r => {
+			db.fetch(key, 'station').then(r => {
 				if (!r) return;
 				else if (r.note && r.note[0] === '2') {
 					const timeElm = span.closest('tr')?.querySelector('time');
@@ -100,6 +132,17 @@ const onDatabaseOpen = db => {
 						}
 					}
 				}
+				span.textContent = r.name;
+			});
+		}
+	}
+	/** @type {NodeListOf<HTMLSpanElement>} */
+	const busSpans = document.querySelectorAll('[data-bus-line]');
+	for (const span of busSpans) {
+		const line = span.dataset.busLine;
+		if (line) {
+			db.fetch(Number.parseInt(line), 'bus').then(r => {
+				if (!r) return;
 				span.textContent = r.name;
 			});
 		}

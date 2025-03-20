@@ -120,7 +120,7 @@ function renderSuicaView(data) {
 				: '';
 			html += '<span class=station-note>' + departure + arrival + '</span>';
 		} else if (r instanceof SuicaBusLog) {
-			html += `（）`;
+			html += `（<span data-bus-line=${r.line}></span>）`;
 		}
 		$tr.innerHTML = html;
 	}
