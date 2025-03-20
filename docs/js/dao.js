@@ -1,5 +1,5 @@
-const stationListPath = './station_code.tsv';
-const busListPath = './bus_code_tsv';
+const stationListPath = './db/station_code.tsv';
+const busListPath = './db/bus_code.tsv';
 const dbVersion = 2;
 
 /**
@@ -43,8 +43,9 @@ class Database {
 	 * @returns {Promise<>}
 	 */
 	async initialize(db = this.db) {
-		db.createObjectStore('station', { keyPath: ['area', 'code'] });
-		db.createObjectStore('bus', { keyPath: ['code'] });
+		const names = db.objectStoreNames;
+		if (!names.contains('station')) db.createObjectStore('station', { keyPath: ['area', 'code'] });
+		if (!names.contains('bus')) db.createObjectStore('bus', { keyPath: ['code'] });
 		const responses = [stationListPath, busListPath].map(path => fetch(path).then(res => res.text()));
 		Promise.all(responses).then(lists => {
 			const [staLines, busLines] = lists.map(list => list.split('\n'));
