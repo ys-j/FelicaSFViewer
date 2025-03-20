@@ -43,23 +43,24 @@ class Database {
 	 * @returns {Promise<>}
 	 */
 	async initialize(db = this.db) {
-		const stationStore = db.createObjectStore('station', { keyPath: ['area', 'code'] });
-		fetch(stationListPath).then(res => res.text()).then(text => {
-			const lines = text.split('\n');
-			for (const ln of lines) {
+		db.createObjectStore('station', { keyPath: ['area', 'code'] });
+		db.createObjectStore('bus', { keyPath: ['code'] });
+		const responses = [stationListPath, busListPath].map(path => fetch(path).then(res => res.text()));
+		Promise.all(responses).then(lists => {
+			const [staLines, busLines] = lists.map(list => list.split('\n'));
+			const tx = this.transaction(['station', 'bus'], 'readwrite')
+			const staStore = tx.objectStore('station');
+			for (const ln of staLines) {
 				const [areaStr, codeStr, name, note] = ln.split('\t');
 				const [area, code] = [areaStr, codeStr].map(s => Number.parseInt(s, 16));
 				if (code) {
 					/** @type {StationRecord} */
 					const record = { area, code, name, note };
-					stationStore.put(record);
+					staStore.put(record);
 				}
 			}
-		});
-		const busStore = db.createObjectStore('bus', { keyPath: ['code'] });
-		fetch(busListPath).then(res => res.text()).then(text => {
-			const lines = text.split('\n');
-			for (const ln of lines) {
+			const busStore = tx.objectStore('bus');
+			for (const ln of busLines) {
 				const [codeStr, name] = ln.split('\t');
 				const code = Number.parseInt(codeStr, 16);
 				if (code) {
