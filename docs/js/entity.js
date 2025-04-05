@@ -65,7 +65,7 @@ class SuicaLog {
 		this.processTypeId = a[1] & 0b01111111;
 		this.processWithCache = a[1] >>> 7 === 1;
 		this.wicket = a[3];
-		this.date = new Date(2000 + (a[4] >>> 1), ((a[4] & 1) << 3) + (a[5] >>> 5), a[5] & 0b11111);
+		this.date = new Date(2000 + (a[4] >>> 1), ((a[4] & 1) << 3) + (a[5] >>> 5) - 1, a[5] & 0b11111);
 		this.value = (a[11] << 8) + a[10];
 		this.processSeqId = (a[13] << 8) + a[14];
 	}
